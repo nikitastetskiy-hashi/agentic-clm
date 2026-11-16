@@ -37,6 +37,11 @@
       "title_markup": "Eliminate **Secret Zero** for on-prem workloads with Vault 2.2",
       "written": "2026-11-05"
     },
+    "hashicorp.com/blog/from-insight-to-action-improving-infrastructure-risk-posture-with-terraform-and-c": {
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "title_markup": "From insight to action: improving **infrastructure risk posture** with Terraform and Concert",
+      "written": "2026-11-16"
+    },
     "hashicorp.com/blog/govern-human-and-agentic-identities-with-confidence-with-vault": {
       "source": "llm:ica-gateway/claude-haiku-5-5",
       "title_markup": "Securely govern **human and agentic identities** with Vault",
@@ -163,10 +168,20 @@
       "source": "llm:ica-gateway/claude-haiku-4-5",
       "written": "2026-10-13"
     },
+    "hashicorp.com/events/webinars/hands-on-workshop-agentic-runtime-security-on-aws": {
+      "description": "A hands-on workshop with HashiCorp Vault in Amazon EKS, showing how to secure AI agents with identity-based access, just-in-time credentials and auditable authorization.",
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
     "hashicorp.com/events/webinars/securing-the-agentic-runtime-technical-deep-dive": {
       "description": "Learn how to secure **agentic workloads** while keeping visibility, accountability, and control over autonomous agents that access systems, APIs, data, and critical workflows in this technical deep dive.",
       "source": "llm:ica-gateway/claude-haiku-5-5",
       "written": "2026-10-26"
+    },
+    "ibm.com/forms/webinars/mkt-on24-webinar-5556013": {
+      "description": "Explore IBM's planned integration of Anthropic's Claude Mythos cyber reasoning into IBM Concert, which pairs AI vulnerability discovery with exposure management to focus remediation on the vulnerabilities that matter most.",
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
     },
     "ibm.webcasts.com/starthere.jsp?ei=1774310&tp_key=c4a79edc06": {
       "description": "Get ready for Atlanta! Learn how to maximize your TechXchange experience with onsite certification exams. Get the first look of our new certifications launching in October (or at the conference), including an exciting new AI credential. We'll also explore IBM and HashiCorp certifications that tailors to your career path/growth.",
@@ -263,6 +278,34 @@
       ],
       "source": "llm:ica-gateway/claude-haiku-5-5",
       "written": "2026-11-09"
+    },
+    "hcp-terraform/2026-11-06": {
+      "bullets": [
+        "HCP Terraform now supports the **remote Terraform MCP server** in beta, so AI clients and coding agents can access organizations, private registry content and the public Terraform Registry without installing an MCP server."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "hcp-terraform/2026-11-07": {
+      "bullets": [
+        "Inactive SCIM users no longer receive **organization-scoped email notifications**, so only active users are targeted."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "hcp-terraform/2026-11-10": {
+      "bullets": [
+        "Vault-backed Azure authentication adds an optional **auth_type** field, so credentials can be read from azure/static-creds or azure/creds. This enables Azure static roles in Terraform Enterprise and HCP."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "hcp-terraform/2026-11-12": {
+      "bullets": [
+        "Team token descriptions are now limited to **400 characters**, with a live character counter in the UI. New tokens cannot be created with longer descriptions, for consistency with project descriptions."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
     },
     "hcp-vault/2026-07-07": {
       "bullets": [
@@ -433,6 +476,20 @@
       "source": "llm:ica-gateway/claude-haiku-5-5",
       "written": "2026-11-05"
     },
+    "terraform/1.17.2": {
+      "bullets": [
+        "**Faster configuration generation** from large HCP Terraform queries, plus fixes for a dependency cycle and repeated unavailable-provider warnings in init logs."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "vault/1.19.26": {
+      "bullets": [
+        "**Bug fixes and improvements:** Login MFA request limits and warnings for duplicate identity aliases."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
     "vault/1.21.10": {
       "bullets": [
         "Bug fixes and improvements"
@@ -513,6 +570,218 @@
       ],
       "source": "llm:ica-gateway/claude-haiku-5-5",
       "written": "2026-10-26"
+    },
+    "vault/2.2.2": {
+      "bullets": [
+        "**Vault Client** is now generally available as a client-only edition with Vault Agent, Vault Proxy and a subset of the CLI, alongside fixes for case-insensitive ACL deny rules and expired AppRole SecretIDs."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    }
+  },
+  "shorts": {
+    "hcp-terraform/2026-09-05": {
+      "bullets": [
+        "Policy sets can now be scoped to workspaces by **tags**, using And or Or matching."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "hcp-terraform/2026-09-17": {
+      "bullets": [
+        "Teams in Organization Settings now have an optional **description field** of up to 300 characters."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "hcp-terraform/2026-10-01": {
+      "bullets": [
+        "**SCIM provisioning** is now available in HCP Terraform for automated user provisioning and deprovisioning."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "hcp-terraform/2026-10-02": {
+      "bullets": [
+        "HCP Terraform supports **org-scoped Azure DevOps tokens** before global PATs retire on December 1, 2026."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "hcp-terraform/2026-10-15": {
+      "bullets": [
+        "For Flex 1.0 HCP billing accounts, the **Premium plan** appears as a locked card that cannot be selected."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "hcp-terraform/2026-11-05": {
+      "bullets": [
+        "HCP Terraform now supports **native tasks**, including the Cloudability task in beta, within runs."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "hcp-terraform/2026-11-06": {
+      "bullets": [
+        "HCP Terraform now supports the **remote Terraform MCP server** in beta for AI clients and coding agents."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "hcp-terraform/2026-11-07": {
+      "bullets": [
+        "Inactive SCIM users no longer receive **organization-scoped email notifications**."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "hcp-terraform/2026-11-10": {
+      "bullets": [
+        "Vault-backed Azure authentication adds an **auth_type** field for Azure static roles."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "hcp-terraform/2026-11-12": {
+      "bullets": [
+        "Team token descriptions are now limited to **400 characters**, with a live counter in the UI."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "hcp-vault/2026-08-24": {
+      "bullets": [
+        "HCP Vault Dedicated clusters on AWS and Azure now have a **connectivity tester** for external endpoints."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "hcp-vault/2026-09-11": {
+      "bullets": [
+        "**Vault 2.0.4** is now available for HCP Vault Dedicated clusters on AWS and Azure."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "hcp-vault/2026-09-23": {
+      "bullets": [
+        "HCP Vault Dedicated clusters on AWS and Azure now expose **data plane account details** directly."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "hcp-vault/2026-10-07": {
+      "bullets": [
+        "HCP Vault Dedicated clusters can now listen on **port 443**."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "hcp-vault/2026-10-14": {
+      "bullets": [
+        "**Three security vulnerabilities** are fixed in Vault 2.1.2, including CVE-2026-105820."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "hcp-vault/2026-10-29": {
+      "bullets": [
+        "**Protection against CVE-2026-5006** for templated policy paths is available on request from HashiCorp Support."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "terraform-enterprise/2.0.6": {
+      "bullets": [
+        "Redis mTLS connections now support **password authentication** alongside certificate-based mutual TLS."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "terraform-enterprise/2.0.7": {
+      "bullets": [
+        "GitHub App integrations can use a **dedicated VCS hostname** for setup and webhook traffic."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "terraform-enterprise/2.0.8": {
+      "bullets": [
+        "Sidekiq now starts with a separate Redis instance that uses **mTLS and password authentication**."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "terraform-enterprise/2.1.0": {
+      "bullets": [
+        "Terraform Enterprise now supports **Terraform Policy**, a declarative, HCL-based policy-as-code framework."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "terraform-enterprise/2.1.1": {
+      "bullets": [
+        "Terraform Enterprise rejects certificates from **eight compromised eMudhra CAs**, addressing CVE-2026-111943."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "terraform/1.17.0": {
+      "bullets": [
+        "**Terraform Policy** is now generally available, with query policies for discovered resources."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "terraform/1.17.2": {
+      "bullets": [
+        "**Faster configuration generation** from large HCP Terraform queries, with fixes for init log warnings."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "vault/2.1.0": {
+      "bullets": [
+        "**Agentic IAM** is now generally available and no longer needs an activation flag."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "vault/2.1.1": {
+      "bullets": [
+        "PKI roles can now pass **non-standard CSR subject attributes** through to issued certificates."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "vault/2.1.2": {
+      "bullets": [
+        "Vault fixes **ACL policy bypass** and cross-namespace policy resolution, plus unvalidated ACME SANs."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "vault/2.2.0": {
+      "bullets": [
+        "**SCIM identity provisioning** is generally available, automating user and group provisioning into Vault."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "vault/2.2.1": {
+      "bullets": [
+        "Vault fixes a **cache-key collision** that could resolve policy aliases to the root policy."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
+    },
+    "vault/2.2.2": {
+      "bullets": [
+        "**Vault Client** is now generally available as a client-only edition of Vault Enterprise."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-16"
     }
   }
 }

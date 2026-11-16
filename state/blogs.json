@@ -1,9 +1,14 @@
 {
   "terraform": [
     {
+      "date": "2026-11-10",
+      "title": "From insight to action: improving infrastructure risk posture with Terraform and Concert",
+      "url": "https://www.hashicorp.com/blog/from-insight-to-action-improving-infrastructure-risk-posture-with-terraform-and-c"
+    },
+    {
       "date": "2026-11-05",
       "title": "Migrate Sentinel and OPA policies to Terraform policy faster with the Terraform policy agent",
-      "url": "https://www.hashicorp.com/en/blog/migrate-sentinel-and-opa-policies-to-terraform-policy-faster"
+      "url": "https://www.hashicorp.com/blog/migrate-sentinel-and-opa-policies-to-terraform-policy-faster"
     },
     {
       "date": "2026-10-27",
@@ -80,7 +85,7 @@
     {
       "date": "2026-11-05",
       "title": "Secure AI credentials from discovery to remediation with Vault Radar and Vault",
-      "url": "https://www.hashicorp.com/en/blog/secure-ai-credentials-from-discovery-to-remediation-with-vault-radar-and-vault"
+      "url": "https://www.hashicorp.com/blog/secure-ai-credentials-from-discovery-to-remediation-with-vault-radar-and-vault"
     },
     {
       "date": "2026-11-03",
