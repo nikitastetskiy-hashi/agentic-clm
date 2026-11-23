@@ -1,6 +1,11 @@
 {
   "terraform": [
     {
+      "date": "2026-11-16",
+      "title": "HCP introduces IBMid support and new enterprise governance capabilities",
+      "url": "https://www.hashicorp.com/blog/hcp-introduces-ibmid-support-and-new-enterprise-governance-capabilities"
+    },
+    {
       "date": "2026-11-10",
       "title": "From insight to action: improving infrastructure risk posture with Terraform and Concert",
       "url": "https://www.hashicorp.com/blog/from-insight-to-action-improving-infrastructure-risk-posture-with-terraform-and-c"
@@ -82,6 +87,16 @@
     }
   ],
   "vault": [
+    {
+      "date": "2026-11-18",
+      "title": "Building a secure foundation for AI on Kubernetes with HashiCorp Vault",
+      "url": "https://www.hashicorp.com/en/blog/building-a-secure-foundation-for-ai-on-kubernetes-with-hashicorp-vault"
+    },
+    {
+      "date": "2026-11-17",
+      "title": "From exposed secrets to managed credentials: Reducing credential risk across the application lifecycle",
+      "url": "https://www.hashicorp.com/blog/from-exposed-secrets-to-managed-credentials"
+    },
     {
       "date": "2026-11-05",
       "title": "Secure AI credentials from discovery to remediation with Vault Radar and Vault",

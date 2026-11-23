@@ -27,6 +27,11 @@
       "title_markup": "Bring **cloud cost insights** to Terraform with IBM Cloudability",
       "written": "2026-11-05"
     },
+    "hashicorp.com/blog/building-a-secure-foundation-for-ai-on-kubernetes-with-hashicorp-vault": {
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "title_markup": "Building a secure foundation for **AI on Kubernetes** with HashiCorp Vault",
+      "written": "2026-11-23"
+    },
     "hashicorp.com/blog/drive-adoption-and-operations-across-hybrid-environments-with-vault": {
       "source": "llm:ica-gateway/claude-haiku-5-5",
       "title_markup": "Drive adoption and operations across **hybrid environments** with Vault",
@@ -36,6 +41,11 @@
       "source": "llm:ica-gateway/claude-haiku-5-5",
       "title_markup": "Eliminate **Secret Zero** for on-prem workloads with Vault 2.2",
       "written": "2026-11-05"
+    },
+    "hashicorp.com/blog/from-exposed-secrets-to-managed-credentials": {
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "title_markup": "From exposed secrets to **managed credentials**: Reducing credential risk across the application lifecycle",
+      "written": "2026-11-23"
     },
     "hashicorp.com/blog/from-insight-to-action-improving-infrastructure-risk-posture-with-terraform-and-c": {
       "source": "llm:ica-gateway/claude-haiku-5-5",
@@ -50,6 +60,11 @@
     "hashicorp.com/blog/hashicorp-vault-agentic-iam-is-now-generally-available": {
       "source": "reference-deck",
       "title_markup": "HashiCorp Vault **agentic IAM** is now generally available"
+    },
+    "hashicorp.com/blog/hcp-introduces-ibmid-support-and-new-enterprise-governance-capabilities": {
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "title_markup": "HCP introduces **IBMid support** and new enterprise governance capabilities",
+      "written": "2026-11-23"
     },
     "hashicorp.com/blog/hcp-terraform-is-the-control-plane-for-ai-driven-infrastructure": {
       "source": "reference-deck",
@@ -271,6 +286,13 @@
       ],
       "source": "llm:ica-gateway/claude-haiku-5-5",
       "written": "2026-10-16"
+    },
+    "hcp-terraform/2026-10-27": {
+      "bullets": [
+        "HCP Terraform makes **Terraform policy and prewritten policies generally available**, with HashiCorp-managed policies for PCI DSS, NIST SP 800-53 Rev 5 and ISO/IEC 27001:2013 that notify you when a newer version is available."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-23"
     },
     "hcp-terraform/2026-11-05": {
       "bullets": [
@@ -614,6 +636,13 @@
       ],
       "source": "llm:ica-gateway/claude-haiku-5-5",
       "written": "2026-11-16"
+    },
+    "hcp-terraform/2026-10-27": {
+      "bullets": [
+        "HCP Terraform makes **Terraform policy generally available** for workspaces and Stacks."
+      ],
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "written": "2026-11-23"
     },
     "hcp-terraform/2026-11-05": {
       "bullets": [
