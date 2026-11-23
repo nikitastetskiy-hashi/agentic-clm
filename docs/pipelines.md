@@ -44,7 +44,7 @@ This repository runs both pipelines on GitHub Actions:
 
 | File | What it is |
 |------|------------|
-| `.github/workflows/weekly-deck.yml` | the weekly build: Mondays 05:17 UTC (06:17 in Madrid in winter, 07:17 in summer), or **Run workflow** with `mode` = `weekly` or `preflight`, optionally as a dry run |
+| `.github/workflows/weekly-deck.yml` | the weekly build: Mondays 00:17 UTC (GitHub starts a scheduled run hours late: 5½–8¾ h so far, so it lands around 06:00–09:00 UTC, and is still dated Monday if it ever runs on time), or **Run workflow** with `mode` = `weekly` or `preflight`, optionally as a dry run |
 | `.github/workflows/self-heal.yml` | the self-heal run: a job of a failed weekly run, or **Run workflow** by hand |
 | `.github/workflows/pr-review.yml` | the [pull request review](#the-pull-request-review): a model's verdict on each pull request, as one comment |
 | `.github/actions/setup/` | what the Dockerfile puts in the SPS image, installed on the runner: Python and the requirements, Chromium, LibreOffice, Inter, and the opencode version the `Dockerfile` pins (only the self-heal run installs opencode: the weekly build calls its model directly) |
