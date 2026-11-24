@@ -163,7 +163,7 @@ These mirror how the reference deck is maintained by hand.
 - **Layout** (`scripts/lib/layout.py`): the template inherits the hand-made deck's small drifts, so
   every build re-aligns what repeats — event cards on one line, each flag in the same corner, product
   icons on one top line 13.5 pt apart, a card's description as far below its title as the title is below
-  its date, month headers level, the blog grid square with every entry one height, the line under the
+  its date, month headers level, blog entries as tall as their titles and one gap apart, the line under the
   title in one place on every slide, a gap between two highlights of the same
   release, an event's points level with the middle of its picture — crops any picture that runs past
   the slide's edge, and keeps a link's underline off the spaces beside it. The Terraform blog and

@@ -17,10 +17,11 @@ uses, and checks it against three independent things — the plan, the fetched d
                again from the deck itself, not taken from the build report)
   layout       nothing extends past the slide's edges; event cards, their flags and product icons sit
                on their lines, a second row of cards from the left under the first, a card's description
-               as far below its title as the title is below its date; month headers are level; the
-               blog grid is square and its entries one height; two highlights of one entry never run
-               together; the line under the title is in one place on every slide; a slide placed like
-               another has its cards / blog entries where that one has them (lib/layout.py)
+               as far below its title as the title is below its date; month headers are level; each
+               blog column is on one x, its entries fixed to their titles' height and one gap apart;
+               two highlights of one entry never run together; the line under the title is in one
+               place on every slide; a slide placed like another has its cards / blog entries where
+               that one has them (lib/layout.py)
   links        every hyperlink resolves to a relationship, is http(s), and does not point at an
                internal host (w3, GitHub Enterprise, Box, Slack …) — this deck goes to customers;
                no link underlines a space beside its word
