@@ -81,6 +81,8 @@ ci_setup() {
   export ICA_BASE_URL; ICA_BASE_URL="$(prop ica-base-url "")"
   # IBM Bob (lib/bob.py): every model step's last resort when the ICA gateway does not answer.
   export BOB_API_KEY;  BOB_API_KEY="$(secret bob-api-key)"
+  # GitHub Copilot (lib/copilot.py), for a model named copilot/...: on GitHub the workflow's own token.
+  export COPILOT_GITHUB_TOKEN; COPILOT_GITHUB_TOKEN="$(secret copilot-github-token)"
   if [[ -n "$ICA_API_KEY" && -n "$ICA_BASE_URL" ]]; then
     export OPENCODE_CONFIG_CONTENT
     OPENCODE_CONFIG_CONTENT="$("$PY" -c 'import sys; sys.path.insert(0, "scripts"); from lib.agent import opencode_config; print(opencode_config())')"

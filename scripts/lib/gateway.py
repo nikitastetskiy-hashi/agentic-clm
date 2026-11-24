@@ -4,6 +4,9 @@ Models are named as opencode names them ("<provider>/<model id>"): `ica-gateway/
 gateway, OpenAI-compatible (ICA_BASE_URL, ICA_API_KEY); `bob/shell` is IBM Bob through Bob Shell 2
 (lib/bob.py, BOB_API_KEY), which picks its own model. Bob is every step's last resort: with_last_resort()
 adds it after a step's own models whenever its key is set, for the day the ICA gateway is down.
+`copilot/...` is GitHub Copilot through Copilot CLI (lib/copilot.py), signed in with the workflow's own
+token (COPILOT_GITHUB_TOKEN) and paid from the repository owner's Copilot allowance: a model for the
+steps that ask a question, used only where a step names it.
 
 The weekly build only calls a model when something needs new wording, self-heal only when a build
 fails, and the pull request review only when there is a pull request, so a rotated key or a model the
@@ -25,14 +28,16 @@ from pathlib import Path
 # The gateways' Cloudflare turns away urllib's default user agent (and Bob's, one naming opencode).
 USER_AGENT = "auto-pptx-pipeline"
 # provider -> (base URL variable, its default, key variable, Authorization scheme). Bob is reached through
-# Bob Shell, not over HTTP: its firewall turns other clients away.
+# Bob Shell, not over HTTP: its firewall turns other clients away. Copilot is reached through Copilot CLI.
 PROVIDERS = {
     "ica-gateway": ("ICA_BASE_URL", "", "ICA_API_KEY", "Bearer"),
     "bob": ("", "bob-shell", "BOB_API_KEY", ""),
+    "copilot": ("", "copilot-cli", "COPILOT_GITHUB_TOKEN", ""),
 }
+CLIENTS = {"bob": "Bob Shell", "copilot": "Copilot CLI"}   # the providers reached through a command-line client
 LAST_RESORT = "bob/shell"
-# Bob Shell is an agent: even with every tool group turned off it may try to read files, and then answers
-# with the tool calls it could not make.
+# Bob Shell is an agent, and so is Copilot CLI: even with every tool group turned off Bob may try to read
+# files, and then answers with the tool calls it could not make.
 NO_TOOLS = ("You answer in this one message. You have no tools and no files: everything you need is below. "
             "Do not try to read, search or list anything.\n\n")
 
@@ -96,9 +101,11 @@ def complete(model: str, messages: list[dict], env=None, *, max_tokens: int = 16
              timeout: int = 300) -> tuple[int | None, str]:
     """(200, the reply's text) from "<provider>/<model id>", or (HTTP status or None, what went wrong).
     max_tokens leaves room for a reasoning model's thinking, which counts towards it."""
-    if model.partition("/")[0] == "bob":
-        return ask_bob(NO_TOOLS + "\n\n---\n\n".join(str(m.get("content", "")) for m in messages), env,
-                       timeout=max(timeout, 600))
+    provider, _, name = model.partition("/")
+    if provider in CLIENTS:
+        prompt = NO_TOOLS + "\n\n---\n\n".join(str(m.get("content", "")) for m in messages)
+        return (ask_bob(prompt, env, timeout=max(timeout, 600)) if provider == "bob"
+                else ask_copilot(name, prompt, env, timeout=max(timeout, 600)))
     found = endpoint(model, env)
     if not found:
         return None, f"no {PROVIDERS.get(model.partition('/')[0], ('', '', 'key for this provider'))[2]} set"
@@ -127,6 +134,14 @@ def ask_bob(prompt: str, env=None, *, timeout: int = 600) -> tuple[int | None, s
     return status, text
 
 
+def ask_copilot(model: str, prompt: str, env=None, *, timeout: int = 600) -> tuple[int | None, str]:
+    """One question to `model` through Copilot CLI: an empty directory, nothing to act with. A refusal
+    (a model Copilot does not serve, a seat or a policy that says no) comes back as HTTP 400."""
+    from lib import copilot
+    status, text, _ = copilot.ask(prompt, model=model, timeout=timeout, env=env)
+    return status, text
+
+
 def _clean(text: str, key: str, key_var: str = "ICA_API_KEY") -> str:
     text = text.split("Received API Key")[0].replace(key, f"[{key_var} removed]")
     text = re.sub(r"\bsk-\S+|\b[0-9a-f]{32,}\b", "[removed]", text)
@@ -149,12 +164,14 @@ def preflight(env=None) -> int:
         if not found:
             continue
         base, key, scheme, key_var = found
-        if model.startswith("bob/"):
-            from lib import bob
-            if bob.executable() is None and env.get("PIPELINE_MODE") != "preflight":
-                print(f"  {model:<32} not checked: Bob Shell is installed when it is needed (the preflight checks it)")
+        provider, _, name = model.partition("/")
+        if provider in CLIENTS:
+            from lib import bob, copilot
+            if (bob if provider == "bob" else copilot).executable() is None and env.get("PIPELINE_MODE") != "preflight":
+                print(f"  {model:<32} not checked: {CLIENTS[provider]} is installed when it is needed (the preflight checks it)")
                 continue
-            status, said = ask_bob("Reply with the single word OK.", env)
+            ok = "Reply with the single word OK."
+            status, said = ask_bob(ok, env) if provider == "bob" else ask_copilot(name, ok, env)
         else:
             status, said = check(base, key, model, scheme=scheme, key_var=key_var)
         if status is not None and status < 300:

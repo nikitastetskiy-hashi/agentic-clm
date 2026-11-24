@@ -15,11 +15,12 @@ FIXTURES = Path(__file__).resolve().parent / "fixtures"
 SNAPSHOT = FIXTURES / "snapshot-2026-10-13"
 SNAPSHOT_DATE = "2026-10-13"
 sys.path.insert(0, str(SCRIPTS))
-# Never download or install Bob Shell from a test (lib/bob.py installs it on demand).
-os.environ["BOB_SHELL_INSTALL"] = "0"
+# Never download or install Bob Shell or Copilot CLI from a test (lib/bob.py and lib/copilot.py install
+# them on demand).
+os.environ["BOB_SHELL_INSTALL"] = os.environ["COPILOT_CLI_INSTALL"] = "0"
 # Nor see the pipeline's real credentials: with them, the steps choose other paths than a test expects
 # (the self-heal run tests a repair with its keys in the environment).
-for _name in ("ICA_API_KEY", "ICA_BASE_URL", "BOB_API_KEY", "BOBSHELL_API_KEY"):
+for _name in ("ICA_API_KEY", "ICA_BASE_URL", "BOB_API_KEY", "BOBSHELL_API_KEY", "COPILOT_GITHUB_TOKEN"):
     os.environ.pop(_name, None)
 # Nor run anything as the self-heal sandbox's user (the tests themselves run in it, as that user).
 for _name in [n for n in os.environ if n.startswith("SANDBOX_")]:

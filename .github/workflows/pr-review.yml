@@ -29,7 +29,8 @@ jobs:
     environment: ${{ github.ref == 'refs/heads/main' && vars.KEY_ENVIRONMENT || '' }}
     permissions:
       contents: read
-      pull-requests: write   # the comment
+      pull-requests: write      # the comment
+      copilot-requests: write   # Copilot CLI, where a review model is named copilot/... (lib/copilot.py)
     steps:
       - name: Let a burst of pushes settle (a newer push cancels this run)
         run: sleep 30
@@ -40,7 +41,7 @@ jobs:
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
         with:
-          node-version: "22"   # Bob Shell, the last resort when the ICA gateway is down, needs 22.15+
+          node-version: "22"   # Bob Shell, the last resort when the ICA gateway is down, needs 22.15+; Copilot CLI 22
 
       - name: Review
         env:
@@ -48,6 +49,7 @@ jobs:
           ICA_API_KEY: ${{ secrets.ICA_API_KEY }}
           ICA_BASE_URL: ${{ vars.ICA_BASE_URL }}
           BOB_API_KEY: ${{ secrets.BOB_API_KEY }}
+          COPILOT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # used only where a review model is named copilot/...
           REVIEW_MODELS: ${{ vars.REVIEW_MODELS }}
           REVIEW_MENTION: ${{ vars.REVIEW_MENTION }}
         run: python3 scripts/review_pr.py

@@ -199,6 +199,15 @@ class Workflows(unittest.TestCase):
                 if "secrets.ICA_API_KEY" in given or "secrets.BOB_API_KEY" in given:
                     self.assertEqual(job.get("environment"), main_only, f"{name}: {job_name}")
 
+    def test_copilot_s_token_goes_only_to_a_job_that_may_make_copilot_requests(self):
+        # Copilot CLI signs in with the job's own token (lib/copilot.py); without the permission it is refused.
+        for name in (WEEKLY, SELF_HEAL, REVIEW):
+            for job_name, job in workflow(name)["jobs"].items():
+                given = any("COPILOT_GITHUB_TOKEN" in s.get("env", {}) and "scrub_secrets" not in s.get("run", "")
+                            for s in job.get("steps", []))
+                self.assertEqual(given, job.get("permissions", {}).get("copilot-requests") == "write", f"{name}: {job_name}")
+        self.assertIn('"$ENRICH_MODEL" != copilot/*', pipeline_step(workflow(WEEKLY))["run"])   # no gateway key needed
+
     def test_every_action_from_elsewhere_is_pinned_to_a_commit(self):
         # The hashicorp org checks this (custom property GHA_Pinned_Hashes_Check): a tag can be moved to
         # other code, a commit cannot.
@@ -229,7 +238,8 @@ class ReviewWorkflow(unittest.TestCase):
     def test_it_may_read_and_comment_nothing_more(self):
         wf = workflow(REVIEW)
         self.assertEqual(wf["permissions"], {"contents": "read"})
-        self.assertEqual(wf["jobs"]["review"]["permissions"], {"contents": "read", "pull-requests": "write"})
+        self.assertEqual(wf["jobs"]["review"]["permissions"],
+                         {"contents": "read", "pull-requests": "write", "copilot-requests": "write"})
 
     def test_drafts_and_forks_wait_and_a_newer_push_replaces_a_running_review(self):
         wf = workflow(REVIEW)

@@ -46,7 +46,8 @@ jobs:
     # from another branch is not given the key: it runs without it, with the rule-based wording.
     environment: ${{ github.ref == 'refs/heads/main' && vars.KEY_ENVIRONMENT || '' }}
     permissions:
-      contents: write   # the release and the state/ commit
+      contents: write           # the release and the state/ commit
+      copilot-requests: write   # Copilot CLI, where a model is named copilot/... (lib/copilot.py): no key to store
     outputs:
       self-heal: ${{ steps.run.outputs.self-heal }}
     steps:
@@ -70,6 +71,7 @@ jobs:
           ICA_API_KEY: ${{ secrets.ICA_API_KEY }}
           ICA_BASE_URL: ${{ vars.ICA_BASE_URL }}
           BOB_API_KEY: ${{ secrets.BOB_API_KEY }}   # the last resort when the ICA gateway is down
+          COPILOT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # used only where a model is named copilot/...
           ENRICH: ${{ vars.ENRICH }}
           ENRICH_MODEL: ${{ vars.ENRICH_MODEL }}
           ENRICH_FALLBACK_MODEL: ${{ vars.ENRICH_FALLBACK_MODEL }}
@@ -81,7 +83,8 @@ jobs:
           STATE_BRANCH: ${{ vars.STATE_BRANCH || 'pipeline-state' }}
         run: |
           # Without the gateway key there is no model to call: the deck keeps its rule-based wording.
-          if [[ -z "$ICA_API_KEY" ]]; then export ENRICH="${ENRICH:-0}"; fi
+          # (A model named copilot/... needs none: Copilot CLI signs in with this job's own token.)
+          if [[ -z "$ICA_API_KEY" && "$ENRICH_MODEL" != copilot/* ]]; then export ENRICH="${ENRICH:-0}"; fi
           bash ci/run.sh
 
       - name: Remove secret values from the files kept with this run
@@ -90,6 +93,7 @@ jobs:
           ICA_API_KEY: ${{ secrets.ICA_API_KEY }}
           BOB_API_KEY: ${{ secrets.BOB_API_KEY }}
           GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COPILOT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 scripts/scrub_secrets.py output data
 
       - name: Keep the deck, the summary and the logs with this run

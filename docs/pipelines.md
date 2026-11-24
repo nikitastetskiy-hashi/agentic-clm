@@ -75,6 +75,7 @@ Settings, under **Settings → Secrets and variables → Actions**:
 | `KEY_ENVIRONMENT` | variable, optional | the name of an environment (**Settings → Environments**) that holds `ICA_API_KEY` and `BOB_API_KEY` instead of the repository, with **Deployment branches** limited to `main`. Runs from `main` then get the key and runs from any other branch do not, so a workflow changed on a branch, which needs no review, cannot reach it. Unset: the repository secret is used. |
 | `BOB_API_KEY` | secret, optional | an IBM Bob API key: the [last resort](#when-the-ica-gateway-is-down-ibm-bob) of every model step (the wording, the review, the repair agent) when the ICA gateway gives no answer. Unset: no Bob. |
 | `BOB_FALLBACK`, `BOB_MAX_COST`, `BOB_MAX_COST_AGENT` | variables, optional | `0` leaves Bob out even with its key; the most one Bob question may cost (USD, default 1) and one Bob repair (default 5) |
+| a model named `copilot/<model id>` in `ENRICH_MODEL`, `ENRICH_FALLBACK_MODEL` or `REVIEW_MODELS` | variables, optional | GitHub Copilot answers that step instead of the ICA gateway, with no secret to set: [GitHub Copilot as the model](#github-copilot-as-the-model). |
 | `REVIEW_MODELS` | variable, optional | the review's models, in order of preference; unset means `ica-gateway/gpt-6.1-sol`, then `ica-gateway/claude-sonnet-5-5` (then Bob, the last resort) |
 | `REVIEW_MENTION` | variable, optional | GitHub logins copied on every review, space-separated |
 | `ENRICH_MODEL`, `ENRICH_FALLBACK_MODEL`, `FIX_MODEL`, `FIX_FALLBACK_MODEL`, `EVENT_SCOPE`, `STRICT`, `RELEASE_KEEP`, `FIX_ATTEMPTS`, `FIX_TIMEOUT`, `ENRICH` | variables, optional | the settings described for SPS below; unset means the default (Haiku 5.5 for wording, then GPT-6 Luna; Sonnet 5.5 for repairs, then GPT-6.1 Sol) |
@@ -385,6 +386,41 @@ caps it at $5). That repair still ran the tests itself; since 2026-10-23 Bob rea
 
 ---
 
+## GitHub Copilot as the model
+
+A step whose model is named `copilot/<model id>` is answered by GitHub Copilot, through Copilot CLI
+(`scripts/lib/copilot.py`), and paid from the Copilot allowance of the repository's owner. It is for
+the steps that ask a question: the wording (`ENRICH_MODEL`, `ENRICH_FALLBACK_MODEL`) and the review
+(`REVIEW_MODELS`). The repair agent is not run on it: a `copilot/...` model in `FIX_MODEL` is passed
+over. For example, a repository with no gateway key at all:
+
+| Variable | Value |
+|---|---|
+| `ENRICH_MODEL` | `copilot/claude-haiku-5.5` |
+| `ENRICH_FALLBACK_MODEL` | `copilot/gpt-6-luna` |
+| `REVIEW_MODELS` | `copilot/claude-sonnet-5.5` |
+
+**No key is stored.** Copilot CLI signs in with the job's own token: the weekly build's and the
+review's jobs have the `copilot-requests: write` permission and pass that token as
+`COPILOT_GITHUB_TOKEN`, which nothing uses unless a model is named `copilot/...`. In a repository of a
+personal account the usage is billed to that account's Copilot seat; in an organisation's, to the
+organisation, whose owner has to allow *Copilot CLI billed to the organization*.
+
+**Boxed in like Bob.** Copilot CLI is an agent, and a question needs none of that. Each one runs in an
+empty directory with a home of its own, the question on the standard input and the answer alone on
+the standard output, with one read-only tool, no MCP server, no custom instructions and no update of
+itself. The process gets the token and no other variable named like a credential. A question may
+spend at most 30 AI credits (30 US cents, the smallest limit the CLI takes; an answer being written is
+finished). The CLI is installed only when a run needs it: version 1.0.115 from the npm registry
+(Node 22). What each answer cost is in the run's log (`copilot: <model> answered for … AI credit(s)`).
+
+Checked on 2026-11-24 on a GitHub-hosted runner, in a public repository of a personal account whose
+Copilot seat an organisation assigns, with nothing but the job's token: Haiku 5.5, Sonnet 5.5 and
+GPT-6 Luna answered. A one-word question cost 0.05 AI credits on Haiku 5.5 with one tool, and 0.26
+with the CLI's whole tool list, whose descriptions go out with every question (5.2 on Sonnet 5.5); a
+200 KB question on the standard input was answered for 1.1. A model Copilot does not serve is refused
+at once (`Model "…" is not available`), and the step turns to its next model.
+
 ## The token exposure check
 
 `.github/workflows/exposure-check.yml` runs after every run of the weekly build, self-heal and the
@@ -422,6 +458,7 @@ Nothing secret is in this repository, in the image, or in a log.
 | `ICA_API_KEY` (GitHub) | Actions secret | the workflow's pipeline step → environment → the wording call, the preflight; in self-heal, the key relay alone (the agent gets a stand-in) | calling the models |
 | `BOB_API_KEY` (GitHub) | Actions secret | the workflows' pipeline and review steps → Bob Shell only (`lib/bob.py`); never the opencode agents, never a command | the last resort, when the ICA gateway is down |
 | `GITHUB_TOKEN` (GitHub) | issued per job by GitHub | the workflow's pipeline step, as `GIT_TOKEN` | release, state commit, repair branch, PR, issue |
+| the same token, as `COPILOT_GITHUB_TOKEN` | issued per job by GitHub | the weekly and review jobs' pipeline step → Copilot CLI only (`lib/copilot.py`), and only where a model is named `copilot/...` | asking GitHub Copilot (the job's `copilot-requests: write`) |
 
 - **The gateway key** goes in an `Authorization` header only, for the direct calls (the wording, the
   preflight, the review: `scripts/lib/gateway.py`). The repair agent never sees it: in the sandbox,

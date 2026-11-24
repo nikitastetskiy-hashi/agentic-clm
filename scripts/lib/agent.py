@@ -22,7 +22,7 @@ from pathlib import Path
 
 import yaml
 
-from lib import bob, redact, sandbox
+from lib import bob, gateway, redact, sandbox
 from lib.common import REPO_ROOT, log
 
 AGENT_DIR = REPO_ROOT / ".opencode"
@@ -44,7 +44,7 @@ def opencode_config(env=None) -> str:
     providers = {}
     for model in (env.get("FIX_MODEL", ""), env.get("FIX_FALLBACK_MODEL", "")):   # "<provider>/<model id>"
         provider, _, name = model.partition("/")
-        if name and provider != "bob":
+        if name and provider not in gateway.CLIENTS:   # those have clients of their own, not opencode
             providers.setdefault(provider, {
                 "npm": "@ai-sdk/openai-compatible", "name": "LLM gateway",
                 "options": {"baseURL": env.get("ICA_BASE_URL", ""), "apiKey": "{env:ICA_API_KEY}",
@@ -119,6 +119,9 @@ def run_first(agent: str, message: str, *, models: list[str], answered, cwd: Pat
         transcript = log_file if not n or log_file is None else log_file.with_name(f"{log_file.stem}-{n + 1}{log_file.suffix}")
         if model.startswith("bob/"):   # Bob Shell keeps every secret but its own key from Bob itself
             code, used = run_bob(agent, message, cwd=cwd, timeout=timeout, log_file=transcript), model
+        elif model.startswith("copilot/"):   # Copilot answers questions here (lib/copilot.py); it is no agent's model
+            log(f"{agent}: {model} is not run as an agent")
+            code, used = 127, model
         else:
             code, used = run(agent, message, model=model, cwd=cwd, timeout=timeout, log_file=transcript,
                              drop_env=drop_env), model
