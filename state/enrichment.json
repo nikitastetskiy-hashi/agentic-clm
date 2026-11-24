@@ -139,6 +139,11 @@
       "source": "reference-deck",
       "title_markup": "Terraform **AzureRM provider 5.0** now generally available"
     },
+    "hashicorp.com/blog/terraform-introduces-tfpolicy-support-for-stacks-scim-support-and-more": {
+      "source": "llm:ica-gateway/claude-haiku-5-5",
+      "title_markup": "Terraform introduces **tfpolicy support for Stacks**, SCIM support, and more",
+      "written": "2026-11-24"
+    },
     "hashicorp.com/blog/terraform-provider-for-google-cloud-80-now-generally-available": {
       "source": "reference-deck",
       "title_markup": "**Terraform provider for Google Cloud 8.0** now generally available"
