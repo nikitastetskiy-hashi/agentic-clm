@@ -556,6 +556,16 @@ class BuildScript(unittest.TestCase):
         self.assertEqual(rc, 0)
         self.assertEqual([c for c in calls if c in steps or "fetch_" in c], steps)
 
+    def test_left_to_itself_the_wording_step_runs_when_there_is_a_model_to_ask(self):
+        # No opencode on this PATH: the gateway's key and address, or Copilot's token for a model of Copilot's.
+        alone = {"ENRICH": "auto", "SKIP_FETCH": "1", "PATH": "/usr/bin:/bin", "ICA_API_KEY": "", "ICA_BASE_URL": "",
+                 "COPILOT_GITHUB_TOKEN": "", "ENRICH_MODEL": "copilot/claude-haiku-5.5"}
+        for given, runs in (({}, False), ({"COPILOT_GITHUB_TOKEN": "ghs_x"}, True),
+                            ({"COPILOT_GITHUB_TOKEN": "ghs_x", "ENRICH_MODEL": "ica-gateway/claude-haiku-5-5"}, False),
+                            ({"ICA_API_KEY": "sk-x", "ICA_BASE_URL": "https://gateway.example/v1"}, True)):
+            rc, calls = self.build(**alone | given)
+            self.assertEqual((rc, "scripts/enrich.py" in calls), (0, runs), given)
+
 
 if __name__ == "__main__":
     unittest.main()
