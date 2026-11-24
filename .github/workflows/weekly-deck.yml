@@ -112,8 +112,9 @@ jobs:
     needs: build
     if: failure() && needs.build.outputs.self-heal == 'true'
     permissions:
-      contents: write        # the repair branch
-      pull-requests: write   # the pull request with the repair
-      issues: write          # the issue when nothing could be repaired
+      contents: write           # the repair branch
+      pull-requests: write      # the pull request with the repair
+      issues: write             # the issue when nothing could be repaired
+      copilot-requests: write   # Copilot CLI, where the repair's or the review's model is named copilot/...
     uses: ./.github/workflows/self-heal.yml
     secrets: inherit

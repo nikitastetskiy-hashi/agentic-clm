@@ -203,10 +203,17 @@ class Workflows(unittest.TestCase):
         # Copilot CLI signs in with the job's own token (lib/copilot.py); without the permission it is refused.
         for name in (WEEKLY, SELF_HEAL, REVIEW):
             for job_name, job in workflow(name)["jobs"].items():
+                if "uses" in job:   # it calls a workflow, whose jobs are checked as their own
+                    continue
                 given = any("COPILOT_GITHUB_TOKEN" in s.get("env", {}) and "scrub_secrets" not in s.get("run", "")
                             for s in job.get("steps", []))
                 self.assertEqual(given, job.get("permissions", {}).get("copilot-requests") == "write", f"{name}: {job_name}")
-        self.assertIn('"$ENRICH_MODEL" != copilot/*', pipeline_step(workflow(WEEKLY))["run"])   # no gateway key needed
+        # No gateway key is needed for a model of Copilot's: the wording is not switched off, the repair not written off.
+        self.assertIn('"$ENRICH_MODEL" != copilot/*', pipeline_step(workflow(WEEKLY))["run"])
+        self.assertIn('"$ENRICH_MODEL" != copilot/*', pipeline_step(workflow(SELF_HEAL))["run"])
+        self.assertIn('"$FIX_MODEL" != copilot/*', pipeline_step(workflow(SELF_HEAL))["run"])
+        import run_agent
+        self.assertIn("COPILOT_GITHUB_TOKEN", run_agent.PUBLISH_ONLY)   # the opencode agent never has it
 
     def test_every_action_from_elsewhere_is_pinned_to_a_commit(self):
         # The hashicorp org checks this (custom property GHA_Pinned_Hashes_Check): a tag can be moved to
@@ -256,7 +263,7 @@ class ReviewWorkflow(unittest.TestCase):
         self.assertEqual(jobs["repair"]["outputs"], {"pull-branch": "${{ steps.run.outputs.pull-branch }}"})
         review = jobs["review"]
         self.assertEqual(review["needs"], "repair")
-        self.assertEqual(review["permissions"], {"contents": "read", "pull-requests": "write"})
+        self.assertEqual(review["permissions"], {"contents": "read", "pull-requests": "write", "copilot-requests": "write"})
         step = pipeline_step_of({"jobs": {"review": review}}, "scripts/review_pr.py")
         self.assertEqual(step["run"], 'python3 scripts/review_pr.py --head "$PULL_BRANCH"')   # no ${{ }} in the script
         self.assertEqual(step["env"]["PULL_BRANCH"], "${{ needs.repair.outputs.pull-branch }}")

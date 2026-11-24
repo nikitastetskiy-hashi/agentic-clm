@@ -1,6 +1,5 @@
-"""GitHub Copilot as a model of the steps that ask a question (lib/copilot.py): what Copilot CLI is given,
-what a refusal does to the step's next model, and that it is neither installed by a test nor an agent's
-model."""
+"""GitHub Copilot as a model of the model steps (lib/copilot.py): what Copilot CLI is given for a question
+and as the repair agent, what a refusal does to the step's next model, and that no test installs it."""
 import contextlib
 import io
 import json
@@ -14,7 +13,7 @@ from unittest import mock
 
 import helpers
 import enrich
-from lib import agent, copilot, gateway
+from lib import agent, copilot, gateway, sandbox
 
 # Stands in for Copilot CLI: records its arguments, environment, directory and question, and answers as
 # `copilot --silent` does: the answer alone on the standard output, the usage in the file it was told. The
@@ -26,7 +25,7 @@ args, prompt = sys.argv[1:], sys.stdin.read()
 Path(os.environ["FAKE_CLI_LOG"]).write_text(json.dumps({{"args": args, "prompt": prompt,
     "env": sorted(k for k in os.environ if k.endswith(("_KEY", "_TOKEN"))),
     "token_ok": os.environ.get("COPILOT_GITHUB_TOKEN") == "ghs_copilot0123456789abcdef",
-    "empty_directory": not os.listdir("."), "home": os.environ["HOME"]}}))
+    "empty_directory": not os.listdir("."), "home": os.environ["HOME"], "cwd": os.getcwd()}}))
 if args[args.index("--model") + 1] == "gone":
     sys.stderr.write('\\nExecution failed: Model "gone" is not available.\\n')
     sys.exit(1)
@@ -62,8 +61,10 @@ class CopilotCli(unittest.TestCase):
         args = call["args"]
         self.assertEqual(args[args.index("--model") + 1], "claude-haiku-5.5")
         self.assertEqual(args[-2:], ["--available-tools", "view"])      # last: it takes every word after it
-        for flag in ("--silent", "--no-ask-user", "--no-auto-update", "--no-custom-instructions", "--disable-builtin-mcps"):
+        for flag in ("--silent", "--no-ask-user", "--no-auto-update", "--no-custom-instructions", "--disable-builtin-mcps",
+                     "--disallow-temp-dir"):
             self.assertIn(flag, args)
+        self.assertNotIn("--allow-tool", args)                          # nothing to approve: it may not write
         self.assertEqual(args[args.index("--max-ai-credits") + 1], "30")
         self.assertEqual(call["prompt"], gateway.NO_TOOLS + "Be brief.\n\n---\n\nReply OK")
         self.assertEqual(call["env"], ["COPILOT_GITHUB_TOKEN"])         # not the gateway key, not the pipeline's token
@@ -93,13 +94,55 @@ class CopilotCli(unittest.TestCase):
         self.assertRegex(out.getvalue(), r"copilot/claude-haiku-5\.5\s+accepted")
         self.assertRegex(out.getvalue(), r"copilot/gone\s+REFUSED by the gateway \(HTTP 400: Copilot CLI: .*not available\)")
 
-    def test_copilot_is_no_agent_s_model(self):
+    def test_the_repair_agent_on_copilot_reads_and_edits_but_runs_no_command(self):
+        # The token is the job's own and cannot be kept from a command the CLI runs, so it runs none.
         with mock.patch.dict(os.environ, {"FIX_MODEL": "copilot/claude-sonnet-5.5", "FIX_FALLBACK_MODEL": "ica-gateway/gpt-6.1-sol"}):
-            self.assertEqual(list(json.loads(agent.opencode_config())["provider"]), ["ica-gateway"])
+            self.assertEqual(list(json.loads(agent.opencode_config())["provider"]), ["ica-gateway"])   # not opencode's to call
         ran = agent.run_first("repo-fixer", "fix it", models=["copilot/claude-sonnet-5.5"], answered=lambda code: code == 0,
-                              cwd=self.tmp)
-        self.assertEqual(ran, (127, "copilot/claude-sonnet-5.5"))
-        self.assertFalse(self.log.exists())
+                              cwd=self.tmp, log_file=self.tmp / "agent.log")
+        self.assertEqual(ran, (0, "copilot/claude-sonnet-5.5"))
+        call = self.call()
+        args = call["args"]
+        self.assertEqual(args[args.index("--available-tools") + 1:], ["view", "grep", "glob", "edit", "create"])
+        self.assertEqual(args[args.index("--allow-tool") + 1], "write")
+        self.assertFalse({"--allow-all-tools", "--allow-all", "--yolo", "--allow-all-paths", "--add-dir"} & set(args))
+        self.assertEqual((args[args.index("--model") + 1], args[args.index("--max-ai-credits") + 1]), ("claude-sonnet-5.5", "500"))
+        self.assertTrue(call["prompt"].endswith("\n\n---\n\n" + agent.NO_COMMANDS + "fix it"))
+        self.assertEqual(call["env"], ["COPILOT_GITHUB_TOKEN"])
+        self.assertEqual(Path(call["cwd"]).resolve(), self.tmp.resolve())
+        self.assertIn("AI credits: 0.26", (self.tmp / "agent.log").read_text(encoding="utf-8"))
+
+    def test_a_tool_that_runs_commands_or_fetches_is_never_given_whoever_asks(self):
+        copilot.run("x", model="m", workspace=self.tmp, tools=("view", "bash", "web_fetch", "edit"), max_credits=30)
+        args = self.call()["args"]
+        self.assertEqual(args[args.index("--available-tools") + 1:], ["view", "edit"])
+
+    def test_in_the_sandbox_the_agent_reads_the_token_from_its_input_alone(self):
+        ran = []
+
+        def without_sudo(cmd, *, cwd, env):   # what sandbox.command runs after sudo switches user
+            line = [*(f"{k}={v}" for k, v in sorted(env.items()))]
+            ran.append(line + cmd)
+            return ["env", "-i", *line, "/bin/bash", "-c", 'cd "$1" && shift && exec "$@"', "sandbox", str(cwd), *cmd]
+
+        work = self.tmp / "repo"
+        (work / "output").mkdir(parents=True)
+        (work / "leads-out").symlink_to("/etc")
+        with mock.patch.dict(os.environ, {"SANDBOX_USER": "sandbox-user"}), \
+                mock.patch.object(sandbox, "command", without_sudo), \
+                mock.patch.object(sandbox, "give"), mock.patch.object(sandbox, "take"), \
+                mock.patch.object(sandbox, "clear") as clear, \
+                mock.patch.object(sandbox.pwd, "getpwnam", return_value=mock.Mock(pw_dir=str(self.tmp))):
+            agent.run_first("repo-fixer", "fix it", models=["copilot/claude-sonnet-5.5"], answered=lambda code: True, cwd=work)
+        call = self.call()
+        self.assertTrue(call["token_ok"])                                     # the CLI has the token...
+        self.assertFalse(any(v in arg for line in ran for arg in line for v in KEYS.values()))   # ...never on a command line
+        self.assertNotIn(KEYS["COPILOT_GITHUB_TOKEN"], call["prompt"])
+        self.assertTrue(call["prompt"].endswith("fix it"))
+        self.assertEqual(call["env"], ["COPILOT_GITHUB_TOKEN"])
+        self.assertEqual(Path(call["cwd"]).resolve(), work.resolve())
+        self.assertFalse((work / "leads-out").is_symlink())                   # no link leads it out of its copy
+        self.assertTrue(clear.called)
 
 
 class Install(unittest.TestCase):

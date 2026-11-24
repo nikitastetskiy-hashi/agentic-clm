@@ -5,8 +5,8 @@ gateway, OpenAI-compatible (ICA_BASE_URL, ICA_API_KEY); `bob/shell` is IBM Bob t
 (lib/bob.py, BOB_API_KEY), which picks its own model. Bob is every step's last resort: with_last_resort()
 adds it after a step's own models whenever its key is set, for the day the ICA gateway is down.
 `copilot/...` is GitHub Copilot through Copilot CLI (lib/copilot.py), signed in with the workflow's own
-token (COPILOT_GITHUB_TOKEN) and paid from the repository owner's Copilot allowance: a model for the
-steps that ask a question, used only where a step names it.
+token (COPILOT_GITHUB_TOKEN) and paid from the repository owner's Copilot allowance: used only where a
+step names it.
 
 The weekly build only calls a model when something needs new wording, self-heal only when a build
 fails, and the pull request review only when there is a pull request, so a rotated key or a model the

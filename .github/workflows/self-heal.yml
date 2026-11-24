@@ -40,6 +40,7 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
+      copilot-requests: write   # Copilot CLI, where a model is named copilot/... (lib/copilot.py): no key to store
     outputs:
       pull-branch: ${{ steps.run.outputs.pull-branch }}
     steps:
@@ -62,6 +63,8 @@ jobs:
           ICA_API_KEY: ${{ secrets.ICA_API_KEY }}
           ICA_BASE_URL: ${{ vars.ICA_BASE_URL }}
           BOB_API_KEY: ${{ secrets.BOB_API_KEY }}   # Bob: the last resort, repair agent included
+          COPILOT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # used only where a model is named copilot/...
+          COPILOT_MAX_CREDITS_AGENT: ${{ vars.COPILOT_MAX_CREDITS_AGENT }}
           ENRICH: ${{ vars.ENRICH }}
           ENRICH_MODEL: ${{ vars.ENRICH_MODEL }}
           ENRICH_FALLBACK_MODEL: ${{ vars.ENRICH_FALLBACK_MODEL }}
@@ -75,10 +78,11 @@ jobs:
           BASE_BRANCH: ${{ vars.BASE_BRANCH || github.ref_name }}
           STATE_BRANCH: ${{ vars.STATE_BRANCH || 'pipeline-state' }}
         run: |
-          if [[ -z "$ICA_API_KEY" ]]; then
+          # A model named copilot/... needs no gateway key: Copilot CLI signs in with this job's own token.
+          if [[ -z "$ICA_API_KEY" && "$FIX_MODEL" != copilot/* ]]; then
             echo "::warning::The ICA_API_KEY secret is not set: the repair agent cannot run, so a failure that persists becomes an issue."
-            export ENRICH="${ENRICH:-0}"
           fi
+          if [[ -z "$ICA_API_KEY" && "$ENRICH_MODEL" != copilot/* ]]; then export ENRICH="${ENRICH:-0}"; fi
           bash ci/run.sh
 
       - name: Remove secret values from the files kept with this run
@@ -87,6 +91,7 @@ jobs:
           ICA_API_KEY: ${{ secrets.ICA_API_KEY }}
           BOB_API_KEY: ${{ secrets.BOB_API_KEY }}
           GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COPILOT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 scripts/scrub_secrets.py output data
 
       - name: Keep the agent's logs, the verdict and the deck with this run
@@ -111,7 +116,8 @@ jobs:
     environment: ${{ github.ref == 'refs/heads/main' && vars.KEY_ENVIRONMENT || '' }}
     permissions:
       contents: read
-      pull-requests: write   # the comment
+      pull-requests: write      # the comment
+      copilot-requests: write   # Copilot CLI, where a review model is named copilot/...
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
@@ -128,6 +134,7 @@ jobs:
           ICA_API_KEY: ${{ secrets.ICA_API_KEY }}
           ICA_BASE_URL: ${{ vars.ICA_BASE_URL }}
           BOB_API_KEY: ${{ secrets.BOB_API_KEY }}
+          COPILOT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REVIEW_MODELS: ${{ vars.REVIEW_MODELS }}
           REVIEW_MENTION: ${{ vars.REVIEW_MENTION }}
         run: python3 scripts/review_pr.py --head "$PULL_BRANCH"

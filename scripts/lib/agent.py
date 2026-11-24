@@ -7,7 +7,8 @@ Two agents live in .opencode/agents/:
 Which model serves which is decided by the caller (ENRICH_MODEL / FIX_MODEL, each with a fallback of
 another vendor's that run_first() turns to when the first gives no answer, then Bob as the last
 resort); nothing here names a provider. A `bob/...` model runs the same agent's instructions through
-Bob Shell (lib/bob.py), which reads and edits but runs no command. Credentials are whatever opencode is
+Bob Shell (lib/bob.py), and a `copilot/...` model through Copilot CLI (lib/copilot.py): both read and
+edit but run no command. Credentials are whatever opencode is
 configured with: the stored login on a laptop, or — in a pipeline — the provider block of
 opencode_config(), passed in OPENCODE_CONFIG_CONTENT. In the self-heal sandbox (lib/sandbox.py) the agent
 runs as the sandbox user, and that block points at the key relay with its stand-in key.
@@ -22,11 +23,12 @@ from pathlib import Path
 
 import yaml
 
-from lib import bob, gateway, redact, sandbox
+from lib import bob, copilot, gateway, redact, sandbox
 from lib.common import REPO_ROOT, log
 
 AGENT_DIR = REPO_ROOT / ".opencode"
-# Bob follows the opencode agent's instructions, which tell it to run the tests; it has no tool for that.
+# Bob and Copilot follow the opencode agent's instructions, which tell it to run the tests; they have no
+# tool for that.
 NO_COMMANDS = ("You cannot run commands here: read and edit only. Wherever these instructions say to run "
                "something, reason about the code instead; the pipeline runs the tests and a full rebuild "
                "after you and tells you what failed.\n\n")
@@ -87,16 +89,39 @@ def run(agent: str, message: str, *, model: str, cwd: Path, timeout: int = 900,
     return code
 
 
+def instructions(agent: str) -> tuple[str, bool]:
+    """(the agent's instructions, whether its opencode permissions let it edit)."""
+    text = (AGENT_DIR / "agents" / f"{agent}.md").read_text(encoding="utf-8")
+    _, front, body = text.split("---", 2)
+    return body.strip(), (yaml.safe_load(front).get("permission") or {}).get("edit") == "allow"
+
+
+def run_copilot(agent: str, message: str, *, model: str, cwd: Path, timeout: int = 900,
+                log_file: Path | None = None) -> int:
+    """The agent's instructions and `message`, run by Copilot CLI on `model` in `cwd`; returns 0 when it
+    finished. As Bob, it reads, edits when the agent's opencode permissions allow `edit`, and runs no
+    command (lib/copilot.py), so it is told that the pipeline runs the tests after it."""
+    body, may_edit = instructions(agent)
+    tools = copilot.READ_TOOLS + (copilot.EDIT_TOOLS if may_edit else ())
+    log(f"copilot: agent={agent} model={model} tools={','.join(tools)} dir={cwd}{' (sandbox)' if sandbox.active() else ''}")
+    status, said, credits = copilot.run(
+        f"{body}\n\n---\n\n{NO_COMMANDS}{message}", model=model.partition("/")[2], workspace=cwd, tools=tools,
+        max_credits=int(float(os.environ.get("COPILOT_MAX_CREDITS_AGENT") or copilot.AGENT_CREDITS)), timeout=timeout)
+    if log_file is not None:
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        log_file.write_text(redact.scrub(f"Copilot CLI, agent {agent} on {model}: {'finished' if status == 200 else 'failed'}\n"
+                                         f"AI credits: {credits:.2f}\n\n{said}\n"), encoding="utf-8")
+    return 0 if status == 200 else 1
+
+
 def run_bob(agent: str, message: str, *, cwd: Path, timeout: int = 900, log_file: Path | None = None) -> int:
     """The agent's instructions and `message`, run by Bob Shell in `cwd`; returns 0 when Bob finished.
     Bob reads, and edits when the agent's opencode permissions allow `edit`; it runs no command
     (lib/bob.py), so it is told that the pipeline runs the tests after it."""
-    text = (AGENT_DIR / "agents" / f"{agent}.md").read_text(encoding="utf-8")
-    _, front, body = text.split("---", 2)
-    allowed = yaml.safe_load(front).get("permission") or {}
-    tools = ("read",) + (("edit",) if allowed.get("edit") == "allow" else ())
+    body, may_edit = instructions(agent)
+    tools = ("read",) + (("edit",) if may_edit else ())
     log(f"bob: agent={agent} tools={','.join(tools)} dir={cwd}{' (sandbox)' if sandbox.active() else ''}")
-    status, said, stats = bob.run(f"{body.strip()}\n\n---\n\n{NO_COMMANDS}{message}", workspace=cwd, mode="agent",
+    status, said, stats = bob.run(f"{body}\n\n---\n\n{NO_COMMANDS}{message}", workspace=cwd, mode="agent",
                                   tools=tools, max_turns=120,
                                   max_cost=float(os.environ.get("BOB_MAX_COST_AGENT") or 5), timeout=timeout)
     if log_file is not None:
@@ -119,9 +144,8 @@ def run_first(agent: str, message: str, *, models: list[str], answered, cwd: Pat
         transcript = log_file if not n or log_file is None else log_file.with_name(f"{log_file.stem}-{n + 1}{log_file.suffix}")
         if model.startswith("bob/"):   # Bob Shell keeps every secret but its own key from Bob itself
             code, used = run_bob(agent, message, cwd=cwd, timeout=timeout, log_file=transcript), model
-        elif model.startswith("copilot/"):   # Copilot answers questions here (lib/copilot.py); it is no agent's model
-            log(f"{agent}: {model} is not run as an agent")
-            code, used = 127, model
+        elif model.startswith("copilot/"):   # nor does Copilot CLI see any secret but its own token
+            code, used = run_copilot(agent, message, model=model, cwd=cwd, timeout=timeout, log_file=transcript), model
         else:
             code, used = run(agent, message, model=model, cwd=cwd, timeout=timeout, log_file=transcript,
                              drop_env=drop_env), model

@@ -83,6 +83,7 @@ ci_setup() {
   export BOB_API_KEY;  BOB_API_KEY="$(secret bob-api-key)"
   # GitHub Copilot (lib/copilot.py), for a model named copilot/...: on GitHub the workflow's own token.
   export COPILOT_GITHUB_TOKEN; COPILOT_GITHUB_TOKEN="$(secret copilot-github-token)"
+  export COPILOT_MAX_CREDITS_AGENT; COPILOT_MAX_CREDITS_AGENT="$(prop copilot-max-credits-agent 500)"   # one repair's
   if [[ -n "$ICA_API_KEY" && -n "$ICA_BASE_URL" ]]; then
     export OPENCODE_CONFIG_CONTENT
     OPENCODE_CONFIG_CONTENT="$("$PY" -c 'import sys; sys.path.insert(0, "scripts"); from lib.agent import opencode_config; print(opencode_config())')"
@@ -322,6 +323,7 @@ ci_sandbox_start() {
     sudo -n install -d -o "$(id -u)" -g "$(id -g)" -m 755 "$SANDBOX_ROOT" || return 1
     export SANDBOX_USER="$SANDBOX_NAME" SANDBOX_DIR="$SANDBOX_ROOT/repo"
     export BOB_SHELL_HOME="$SANDBOX_ROOT/bobshell"   # installed by this user, run by the sandbox's
+    export COPILOT_CLI_HOME="$SANDBOX_ROOT/copilot-cli"   # the same for Copilot CLI
     if [[ -d "$HOME/.cache/ms-playwright" ]]; then   # the browser of the fetchers that need one
       sudo -n mkdir -p "$home/.cache" && sudo -n cp -R "$HOME/.cache/ms-playwright" "$home/.cache/" \
         && sudo -n chown -R "$SANDBOX_USER:" "$home/.cache"
