@@ -76,6 +76,8 @@ jobs:
           ENRICH_MODEL: ${{ vars.ENRICH_MODEL }}
           ENRICH_FALLBACK_MODEL: ${{ vars.ENRICH_FALLBACK_MODEL }}
           REVIEW_MODELS: ${{ vars.REVIEW_MODELS }}   # only checked by the preflight here
+          FIX_MODEL: ${{ vars.FIX_MODEL }}           # the same: the repair runs in self-heal.yml
+          FIX_FALLBACK_MODEL: ${{ vars.FIX_FALLBACK_MODEL }}
           EVENT_SCOPE: ${{ vars.EVENT_SCOPE }}
           STRICT: ${{ vars.STRICT }}
           RELEASE_KEEP: ${{ vars.RELEASE_KEEP }}
