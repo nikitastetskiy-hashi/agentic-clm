@@ -210,9 +210,12 @@ class Install(unittest.TestCase):
             with self.assertRaisesRegex(bob.BobError, "Node 22.15 or later"):
                 bob.install()
 
-    def test_the_tests_never_see_the_pipeline_s_real_keys(self):
-        # Self-heal tests a repair with its keys set; with them, the steps would take other paths.
-        for name in ("ICA_API_KEY", "ICA_BASE_URL", "BOB_API_KEY"):
+    def test_the_tests_never_see_the_pipeline_s_real_keys_or_its_choice_of_models(self):
+        # Self-heal tests a repair with its keys and settings in the environment; with them, the steps
+        # would take other paths (a repository whose models are Copilot's once failed a test of Bob's).
+        for name in ("ICA_API_KEY", "ICA_BASE_URL", "BOB_API_KEY", "COPILOT_GITHUB_TOKEN", "ENRICH_MODEL",
+                     "ENRICH_FALLBACK_MODEL", "FIX_MODEL", "FIX_FALLBACK_MODEL", "REVIEW_MODELS"):
+            self.assertIn(name, helpers.PIPELINE_SETTINGS)
             self.assertNotIn(name, os.environ)
 
     def test_the_tests_never_install_it(self):

@@ -18,9 +18,12 @@ sys.path.insert(0, str(SCRIPTS))
 # Never download or install Bob Shell or Copilot CLI from a test (lib/bob.py and lib/copilot.py install
 # them on demand).
 os.environ["BOB_SHELL_INSTALL"] = os.environ["COPILOT_CLI_INSTALL"] = "0"
-# Nor see the pipeline's real credentials: with them, the steps choose other paths than a test expects
-# (the self-heal run tests a repair with its keys in the environment).
-for _name in ("ICA_API_KEY", "ICA_BASE_URL", "BOB_API_KEY", "BOBSHELL_API_KEY", "COPILOT_GITHUB_TOKEN"):
+# Nor see the pipeline's real credentials or the models a repository chose: with them, the steps choose
+# other paths than a test expects (the self-heal run tests a repair with its settings in the environment).
+PIPELINE_SETTINGS = ("ICA_API_KEY", "ICA_BASE_URL", "BOB_API_KEY", "BOBSHELL_API_KEY", "COPILOT_GITHUB_TOKEN",
+                     "ENRICH_MODEL", "ENRICH_FALLBACK_MODEL", "FIX_MODEL", "FIX_FALLBACK_MODEL", "REVIEW_MODELS",
+                     "COPILOT_MAX_CREDITS_AGENT")
+for _name in PIPELINE_SETTINGS:
     os.environ.pop(_name, None)
 # Nor run anything as the self-heal sandbox's user (the tests themselves run in it, as that user).
 for _name in [n for n in os.environ if n.startswith("SANDBOX_")]:

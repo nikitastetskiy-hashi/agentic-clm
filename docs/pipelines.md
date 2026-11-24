@@ -437,7 +437,11 @@ edit and asked to reach further, the CLI ran no command (it has no tool for it) 
 and write outside its directory: a link leading out of it, the parent directory, `/etc`,
 `/proc/self/environ`, its own home, the system's temporary directory. A first weekly build
 there, with 71 lines to word, got them from Haiku 5.5 in one question for 1.75 AI credits (70 accepted
-by the wording rules, in under two minutes); the preflight's three questions cost 0.7 together.
+by the wording rules, in under two minutes); the preflight's three questions cost 0.7 together. The
+repair agent, rehearsed there on a planted fault in the heading lookup, restored it on Sonnet 5.5 and
+added a regression test; the guard, the tests and the full rebuild passed, and the whole self-heal
+run took under six minutes. It took two rounds (4.7 and 7.5 AI credits): the first round's proof
+failed on a test of this repository that read the repository's own choice of models, since fixed.
 
 ## The token exposure check
 
