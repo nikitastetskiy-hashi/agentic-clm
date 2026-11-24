@@ -14,7 +14,8 @@ Per slide kind:
                 Each column uses the richest wording that fits its box; if that spacing cannot hold a
                 month, the slide tightens it before it drops any content, and only then shortens the
                 oldest entries away.
-  * blogs     — the entry boxes are filled newest first; a box grows by a line for a long title;
+  * blogs     — the entry boxes are filled newest first, each as tall as its title, stacked one gap apart,
+                the right column ending on the left one's bottom line;
                 the topic buttons keep their labels on one line.
   * webinars  — one card per event with its type, link, title, a description cut to whole sentences
                 that fit above the icon row, the product icon(s) it is badged with and a language flag;
@@ -272,10 +273,12 @@ def render_blogs(ctx: Context, slide: Path, plan: dict) -> tuple[list[Path], dic
         raise BuildError(f"{plan['role']}: no blog entry boxes found in the template slide")
     layout.align_blog_grid(groups, ctx.slide_cx)
     layout.place_like([g["group"] for g in groups], ctx.placed_like.get(plan["role"], []))
-    # Every box is as tall as the longest title allowed: boxes that followed their own title's
-    # lines left uneven gaps between the rows. (They are "resize shape to fit text", which PowerPoint
-    # only recomputes when the text is edited by hand, so the height is stored here.)
-    box_cy = min(sl.box(g["box"])[3] for g in groups) + (BLOG_TITLE_LINES - 1) * BLOG_LINE
+    # Every box is as tall as its own title, and each column's boxes are stacked one even gap apart:
+    # the gap two full boxes of the grid leave. The template's boxes "resize shape to fit text",
+    # which a renderer recomputes from its own font metrics, so the height is fixed here instead.
+    one_line = min(sl.box(g["box"])[3] for g in groups)
+    rows = sorted(sl.box(g)[1] for g in max(layout.blog_columns(groups, ctx.slide_cx), key=len))
+    gap = max(0, rows[1] - rows[0] - one_line - (BLOG_TITLE_LINES - 1) * BLOG_LINE) if len(rows) > 1 else 0
     written = []
     for i, grp in enumerate(groups):
         if i >= len(plan["entries"]):
@@ -300,7 +303,9 @@ def render_blogs(ctx: Context, slide: Path, plan: dict) -> tuple[list[Path], dic
                                   entry.get("title_short", ""))
         title_line = compose.paragraph(paras[1], compose.markup_segments(title))
         compose.replace_paragraphs(box_sp, [date_line, title_line])
+        box_cy = one_line + (lines - 1) * BLOG_LINE
         sl.set_box(box_sp, cy=box_cy)
+        fixed_height(box_sp)
         for xf in grp["group"].getElementsByTagName("a:xfrm"):
             if xf.parentNode.parentNode is grp["group"]:
                 for child in xf.childNodes:
@@ -308,6 +313,10 @@ def render_blogs(ctx: Context, slide: Path, plan: dict) -> tuple[list[Path], dic
                         child.setAttribute("cy", str(box_cy))
         written.append({"date_display": entry["date_display"], "title": sl.strip_markup(title),
                         "url": entry["url"], "title_lines": lines})
+    left, right = layout.blog_columns(groups[:len(plan["entries"])], ctx.slide_cx)
+    layout.stack_blog_column(left, gap)
+    if left:
+        layout.stack_blog_column(right, gap, bottom=max(sl.box(g)[1] + sl.box(g)[3] for g in left))
     button_scale = fit_buttons(dom)
     for sp in sl.link_buttons(dom):   # the label clicks through too, not only the pill around it
         compose.link_label(sp)
@@ -494,6 +503,13 @@ def shrink_to_fit(sp, paragraphs: list[list[tuple[str, bool]]], *, one_line: boo
     percent = max(60, int(ratio * 100) // 5 * 5)
     set_font_scale(sp, percent)
     return percent
+
+
+def fixed_height(sp) -> None:
+    """A text box keeps the height stored for it: no "resize shape to fit text"."""
+    body = sp.getElementsByTagName("a:bodyPr")[0]
+    for el in list(body.getElementsByTagName("a:spAutoFit")):
+        body.replaceChild(sp.ownerDocument.createElement("a:noAutofit"), el)
 
 
 def set_font_scale(sp, percent: int) -> None:

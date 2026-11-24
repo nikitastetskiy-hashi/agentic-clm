@@ -393,8 +393,35 @@ class WeeklyBuild(unittest.TestCase):
         deck = self.damaged("blog-grid", "vault-blogs", lambda x: nudge(x, 'name="Group 5"', dx=-33020))
         self.assertEqual(self.failed(self.verify(deck)), {"layout"})
 
+    def test_blog_entries_fit_their_titles_one_gap_apart(self):
+        from lib import slides as sl
+        import build_deck
+        from lib.layout import blog_columns, blog_gaps, places
+        cx = self.slide_cx()
+        report = json.loads((self.tmp / "data" / "build-report.json").read_text(encoding="utf-8"))
+        for role in ("terraform-blogs", "vault-blogs"):
+            groups = sl.blog_groups(minidom.parseString(helpers.slide_text(self.deck, role)), cx)
+            lines = [e["title_lines"] for e in next(s for s in report["slides"] if s["role"] == role)["entries"]]
+            one_line = min(sl.box(g["group"])[3] - (n - 1) * build_deck.BLOG_LINE for g, n in zip(groups, lines))
+            self.assertEqual([sl.box(g["group"])[3] for g in groups],
+                             [one_line + (n - 1) * build_deck.BLOG_LINE for n in lines])
+            gaps = [gap for c in blog_columns(groups, cx) for gap in blog_gaps(c)]
+            self.assertLessEqual(max(gaps) - min(gaps), 5080)
+            self.assertGreater(min(gaps), 0)
+            left, right = blog_columns(groups, cx)
+            ends = [max(sl.box(g)[1] + sl.box(g)[3] for g in c) for c in (left, right)]
+            top = min(sl.box(g)[1] for g in right)
+            if ends[0] != ends[1]:   # only where ending there would lift it above its grid place
+                grid = minidom.parseString(helpers.slide_text(helpers.REPO / "templates" / "cadence-template.pptx", "vault-blogs"))
+                self.assertEqual(top, min(y for x, y in places(grid, "blogs", cx) if x > cx / 4))
+
     def test_gate_catches_a_blog_entry_of_another_height(self):
         deck = self.damaged("blog-height", "vault-blogs", lambda x: nudge(x, 'name="Group 5"', dcy=139700))
+        self.assertEqual(self.failed(self.verify(deck)), {"layout"})
+
+    def test_gate_catches_a_blog_entry_that_resizes_to_its_text(self):
+        deck = self.damaged("blog-autofit", "vault-blogs",
+                            lambda x: x.replace("<a:noAutofit/>", "<a:spAutoFit/>"))
         self.assertEqual(self.failed(self.verify(deck)), {"layout"})
 
     def test_gate_catches_a_subtitle_off_the_other_slides_line(self):
@@ -414,9 +441,11 @@ class WeeklyBuild(unittest.TestCase):
             dom = minidom.parseString(helpers.slide_text(self.deck, role))
             return [sl.box(c)[:3] for c in card_rows(sl.webinar_slots(dom))[0]]
 
-        def entries(role):
+        def entries(role):   # the left column's top entry and the right column's x: the rest follow titles
+            from lib.layout import blog_columns
             dom = minidom.parseString(helpers.slide_text(self.deck, role))
-            return [sl.box(g["group"])[:2] for g in sl.blog_groups(dom, cx)]
+            left, right = blog_columns(sl.blog_groups(dom, cx), cx)
+            return sl.box(min(left, key=lambda g: sl.box(g)[1]))[:2], sl.box(right[0])[0]
         self.assertEqual(cards("terraform-webinars"), cards("vault-webinars"))
         self.assertEqual(entries("terraform-blogs"), entries("vault-blogs"))
 

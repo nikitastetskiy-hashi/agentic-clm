@@ -20,8 +20,10 @@ The rules (the card values follow a reviewer's corrections of a built deck, 2026
     by the same 13.5 pt as the first icon's distance from the card's edge;
   * month columns: headers on one top line, bodies on one top line, and two highlights of the same
     entry never run into each other (at least MIN_HIGHLIGHT_GAP_PT between them);
-  * blog entries: one x per column, the left column's rows evenly spaced, the right column's rows
-    on the left column's, every entry one height (so the gaps between rows are even too);
+  * blog entries: one x per column, each entry as tall as its own title (fixed, never left for a
+    renderer to resize), stacked in its column with one gap between every two entries; the right
+    column (under the topic buttons) ends on the left column's bottom line, unless that would lift
+    it above its place in the grid;
   * the line under the title sits in the same box on every slide that has one;
   * sibling slides (`placed_like` in config/deck.yaml): the Terraform and the Vault version of a
     slide keep their event cards / blog entries at the same places, so nothing jumps when one follows
@@ -319,23 +321,38 @@ def align_blog_grid(groups: list[dict], slide_cx: int) -> None:
             sl.set_box(group, y=min(rows, key=lambda r: abs(r - y)))
 
 
+def blog_gaps(column: list) -> list[int]:
+    """The space between each entry of a column and the next one down."""
+    boxes = sorted((sl.box(g) for g in column), key=lambda b: b[1])
+    return [b[1] - (a[1] + a[3]) for a, b in zip(boxes, boxes[1:])]
+
+
+def stack_blog_column(column: list, gap: int, bottom: int | None = None) -> None:
+    """Each entry `gap` below the one above it, from the column's top entry down; with `bottom`, the
+    last entry ends there instead, as long as the top entry then stays no higher than it was."""
+    column = sorted(column, key=lambda g: sl.box(g)[1])
+    if not column:
+        return
+    y = sl.box(column[0])[1]
+    if bottom is not None:
+        y = max(y, bottom - sum(sl.box(g)[3] for g in column) - gap * (len(column) - 1))
+    for group in column:
+        sl.set_box(group, y=y)
+        y += sl.box(group)[3] + gap
+
+
 def blog_problems(groups: list[dict], slide_cx: int) -> list[str]:
     out = []
     left, right = blog_columns(groups, slide_cx)
-    heights = [sl.box(g)[3] for g in left + right]
-    if heights and max(heights) - min(heights) > TOLERANCE:
-        out.append(f"blog entries are not one height ({', '.join(_pt(h) for h in heights)})")
+    if any(g["box"].getElementsByTagName("a:spAutoFit") for g in groups):
+        out.append("a blog entry box resizes to fit its text, so a renderer sizes it, not the builder")
     for name, column in (("left", left), ("right", right)):
         xs = [sl.box(g)[0] for g in column]
         if xs and max(xs) - min(xs) > TOLERANCE:
             out.append(f"blog entries of the {name} column are not on one x ({', '.join(_pt(x) for x in xs)})")
-    rows = [sl.box(g)[1] for g in left]
-    if _uneven(rows):
-        out.append(f"blog rows are not evenly spaced ({', '.join(_pt(r) for r in sorted(rows))})")
-    for group in right:
-        y = sl.box(group)[1]
-        if rows and min(abs(y - r) for r in rows) > TOLERANCE:
-            out.append(f"a right-column blog entry ({_pt(y)}) is not on a left-column row")
+    gaps = blog_gaps(left) + blog_gaps(right)
+    if gaps and (max(gaps) - min(gaps) > 2 * TOLERANCE or min(gaps) < 0):
+        out.append(f"blog entries are not one gap apart ({', '.join(_pt(g) for g in gaps)})")
     return out
 
 
@@ -385,9 +402,20 @@ def place_like(nodes: list, like: list[tuple]) -> None:
 
 def sibling_problems(dom, like_dom, kind: str, slide_cx: int) -> list[str]:
     """Two sibling slides' cards, or blog entries, one by one at the same x and y. (A card's height is
-    its slide's own: a second row shortens the cards.)"""
-    what = "event card" if kind == "webinars" else "blog entry"
-    pairs = zip(_repeated(dom, kind, slide_cx), _repeated(like_dom, kind, slide_cx))
+    its slide's own: a second row shortens the cards. A blog entry's height is its title's, so only
+    the left column's top entry is compared, and the right column's x: the rest follow from titles.)"""
+    what = "event card" if kind == "webinars" else "blog column's top entry"
+
+    def compared(d):
+        if kind != "blogs":
+            return _repeated(d, kind, slide_cx)
+        tops = [min(c, key=lambda g: sl.box(g)[1]) for c in blog_columns(sl.blog_groups(d, slide_cx), slide_cx) if c]
+        return tops[:1]
+    if kind == "blogs":
+        xs = [{sl.box(g)[0] for g in blog_columns(sl.blog_groups(d, slide_cx), slide_cx)[1]} for d in (dom, like_dom)]
+        if xs[0] and xs[1] and abs(min(xs[0]) - min(xs[1])) > TOLERANCE:
+            return [f"the right blog column is at x {_pt(min(xs[0]))}; its sibling slide's is at {_pt(min(xs[1]))}"]
+    pairs = zip(compared(dom), compared(like_dom))
     return [f"{what} {i} is at {_pt(a[0])}, {_pt(a[1])}; its sibling slide's is at {_pt(b[0])}, {_pt(b[1])}"
             for i, (a, b) in enumerate(((sl.box(m), sl.box(n)) for m, n in pairs), 1)
             if abs(a[0] - b[0]) > TOLERANCE or abs(a[1] - b[1]) > TOLERANCE]
