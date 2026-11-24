@@ -419,7 +419,9 @@ Copilot seat an organisation assigns, with nothing but the job's token: Haiku 5.
 GPT-6 Luna answered. A one-word question cost 0.05 AI credits on Haiku 5.5 with one tool, and 0.26
 with the CLI's whole tool list, whose descriptions go out with every question (5.2 on Sonnet 5.5); a
 200 KB question on the standard input was answered for 1.1. A model Copilot does not serve is refused
-at once (`Model "…" is not available`), and the step turns to its next model.
+at once (`Model "…" is not available`), and the step turns to its next model. A first weekly build
+there, with 71 lines to word, got them from Haiku 5.5 in one question for 1.75 AI credits (70 accepted
+by the wording rules, in under two minutes); the preflight's three questions cost 0.7 together.
 
 ## The token exposure check
 
